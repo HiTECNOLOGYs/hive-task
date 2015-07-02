@@ -3,4 +3,9 @@
               #:ht)
   (:use #:closer-common-lisp
         #:alexandria
-        #:stmx))
+        #:stmx)
+  (:export #:start-scheduler
+           #:stop-scheduler
+
+           #:put-work
+           #:make-work))
