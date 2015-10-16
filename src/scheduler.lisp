@@ -1,11 +1,9 @@
 (in-package #:org.hitecnologys.hive-task)
 
 (defparameter *scheduler-run-interval* 1/100) ; 10 ms sounds like about enough precison.
-(defparameter *max-number-of-threads*  4)     ; Most common number of cores nowadays.
-                                              ; TODO Make it actually guess number of cores CPU has.
 
 (defvar       *scheduler-thread*       nil)
-(defvar       *threads-pool*           (make-array *max-number-of-threads*))
+(defvar       *threads-pool*           nil)
 
 (defvar       *work-queue*             (make-instance 'stmx.util:tfifo))
 (defvar       *worker-messages*        (make-instance 'stmx.util:tchannel))
@@ -13,6 +11,19 @@
 (define-constant +time-slice-duration+ 1/1000) ; That is 1 ms.
                                                ; About enough time for almost anything.
                                                ; All the time requirements are measured in slices.
+
+;;; **************************************************************************
+;;;  Hardware detection
+;;; **************************************************************************
+
+(defun get-cpu-core-count ()
+  #+linux (let* ((cpu-info (com.informatimago.clmisc.resource-utilization::cpu-info))
+                 (core-count-str (cdr (assoc :cpu-cores cpu-info)))
+                 (core-count-int (parse-integer core-count-str)))
+            core-count-int)
+  #-linux 4 ; Defaults to 4 for non-linux systems since it's a popular number of cores.
+  )
+
 
 ;;; **************************************************************************
 ;;;  Classes
@@ -112,13 +123,23 @@ running and respond to load change)."
 (defun make-scheduler ()
   (start-thread (make-thread 'scheduler-thread "Scheduler")))
 
+(defun init-threads-pool ()
+  (unless *threads-pool*
+    (setf *threads-pool* (make-array (get-cpu-core-count)))))
+
+(defun deinit-threads-pool ()
+  (when *threads-pool*
+    (setf *threads-pool* nil)))
+
 (defun start-scheduler ()
   (unless (scheduler-running-p)
+    (init-threads-pool)
     (setf *scheduler-thread* (make-scheduler))))
 
 (defun stop-scheduler ()
   (when (scheduler-running-p)
-    (stop-thread *scheduler-thread*))
+    (stop-thread *scheduler-thread*)
+    (deinit-threads-pool))
   (unless (scheduler-running-p)
     (setf *scheduler-thread* nil)))
 
@@ -156,7 +177,7 @@ running and respond to load change)."
                                 bt:*default-special-bindings*))))
 
 (defun ensure-workers-are-running ()
-  (loop for i below *max-number-of-threads*
+  (loop for i below (length *threads-pool*)
         for thread = (svref *threads-pool* i)
         unless (and (threadp thread) (thread-running-p thread))
           do (setf (svref *threads-pool* i) (make-worker i))))
