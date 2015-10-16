@@ -5,11 +5,11 @@
          :reader thread-name)
    (state :initform :stopped
           :reader thread-state
-          :type '(or :stopped   ; Terminated by scheduler or not started yet
-                     :starting  ; Thread initializing
-                     :running   ; Running
-                     :stopping  ; Signal sent, waiting thread to terminate itself
-                     ))
+          :type (member :stopped   ; Terminated by scheduler or not started yet
+                        :starting  ; Thread initializing
+                        :running   ; Running
+                        :stopping  ; Signal sent, waiting thread to terminate itself
+                        ))
    (object)))
 
 (defmethod print-object ((object thread) stream)

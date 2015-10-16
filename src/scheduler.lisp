@@ -33,10 +33,10 @@
 
 (defclass worker-thread (thread)
   ((work-state :initform :waiting
-               :type '(or :waiting  ; Waiting for new work.
-                          :running  ; Running work.
-                          :aborting ; Work ran out of time. Abort signal sent.
-                          ))))
+               :type (member :waiting  ; Waiting for new work.
+                             :running  ; Running work.
+                             :aborting ; Work ran out of time. Abort signal sent.
+                             ))))
 
 (defclass work ()
   ((function :initarg :function
