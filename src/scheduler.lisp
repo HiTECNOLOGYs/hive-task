@@ -29,6 +29,9 @@
 ;;;  Classes
 ;;; **************************************************************************
 
+;; ----------------
+;; Threads
+
 (defclass scheduler-thread (thread) ())
 
 (defclass worker-thread (thread)
@@ -38,7 +41,12 @@
                              :aborting ; Work ran out of time. Abort signal sent.
                              ))))
 
-(defclass work ()
+;; ----------------
+;; Tasks
+
+(defclass task () ())
+
+(defclass work (task)
   ((function :initarg :function
              :initform (error "Work function must be supplied!"))
    (arguments :initarg :arguments
@@ -46,11 +54,22 @@
    (time-slices :initarg :time-slices
                 :initform 1)))
 
-(defclass message ()
+(defclass message (task)
   ((type :initarg :type
          :initform (error "Message must have type"))))
 
+;;; **************************************************************************
+;;;  Tasks
+;;; **************************************************************************
+
 (defgeneric work-on (thread object))
+
+(defmethod work-on :around (thread (object task))
+  (with-slots (work-state) thread
+    (unwind-protect
+      (progn (setf work-state :running)
+             (call-next-method))
+      (setf work-state :waiting))))
 
 ;;; **************************************************************************
 ;;;  Messages
@@ -90,12 +109,6 @@
     (if (null arguments)
       (funcall function)
       (apply function arguments))))
-
-(defun handle-work-or-message (thread object)
-  (with-slots (work-state) thread
-    (setf work-state :running)
-    (work-on thread object)
-    (setf work-state :waiting)))
 
 ;;; **************************************************************************
 ;;;  Scheduler
@@ -190,5 +203,4 @@ running and respond to load change)."
 
 (defmethod run-thread ((thread worker-thread))
   (do-while-running (thread)
-    (handle-work-or-message thread
-                            (atomic (run-orelse #'take-work #'take-message)))))
+    (work-on thread (atomic (run-orelse #'take-work #'take-message)))))
