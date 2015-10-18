@@ -44,7 +44,7 @@ All in all, I'm planning to implement the following features (not in order):
 * [✗] Better scheduler (dynamic load management, worker thread profiling, work monitoring)
 * [✗] Events (workers are not supposed to put work, instead they should schedule events)
 * [✗] Cooperative multitasking (not exactly what is usually meant by this term: many threads may work on one job and exchange data if necessary)
-* [✗] Automatic scaling (using hardware detection to get the most out of machine it's running on)
+* [✓] Automatic scaling (using hardware detection to get the most out of machine it's running on)
 * [✗] Support for non-general-purpose processors for computation acceleration (GPUs, FPGAs, etc)
 * [✗] More multitasking primitives (like various work types that allow tweaking performance and memory consumption better)
 * Haven't though of anything else to add yet
