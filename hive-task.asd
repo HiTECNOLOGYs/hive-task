@@ -10,6 +10,7 @@
   :pathname "src/"
   :components ((:file "packages")
                (:file "utilities")
+               (:file "primitives")
                (:file "threads")
                (:file "timers")
                (:file "scheduler")))
