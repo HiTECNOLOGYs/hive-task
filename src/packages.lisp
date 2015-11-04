@@ -4,11 +4,20 @@
   (:use #:closer-common-lisp
         #:alexandria
         #:stmx)
+  (:shadow #:tpush
+           #:tpop)
 
   ;; Generic container methods
   (:export #:full-p  ; ......................... Generic function
            #:empty-p ; ......................... Generic function
            #:empty!  ; ......................... Generic function
+           )
+
+  ;; Ordered container methods
+  (:export #:tcar     ; ........................ Generic function
+           #:tcdr     ; ........................ Generic function
+           #:tpop     ; ........................ Generic function
+           #:tpush    ; ........................ Generic function
            )
 
   ;; Ordered container methods
@@ -36,6 +45,8 @@
            #:transactional-ordered-container   ; Class
            #:transactional-key-value-container ; Class
            #:transactional-cell                ; Class
+           #:transactional-cons                ; Class
+           #:transactional-list                ; Class
            #:transactional-filo-queue          ; Class
            #:transactional-fifo-queue          ; Class
            #:transactional-channel             ; Class
@@ -46,6 +57,11 @@
 
   ;; Additional container-specific methods
   (:export #:transactional-map-predicate ; ..... Generic function
+           )
+
+  ;; Additional functions
+  (:export #:tcons                       ; ..... Function
+           #:tlist                       ; ..... Function
            )
   )
 

@@ -13,6 +13,16 @@
 (defgeneric empty-p (object))
 (defgeneric empty! (object))
 
+;; Cons-specific methods
+(defgeneric tcar (object))
+(defgeneric tcdr (object))
+(defgeneric (setf tcar) (new-value object))
+(defgeneric (setf tcdr) (new-value object))
+
+;; List-specific methods
+(defgeneric tpush (value object))
+(defgeneric tpop (object))
+
 ;; Ordered container methods
 (defgeneric peek (object))
 (defgeneric take (object))
@@ -55,6 +65,14 @@ and data, not necessarily in order."))
   (container)
   (:documentation "Simplest transactional container. Holds a single value of any type."))
 
+(defclass transactional-cons (transactional-ordered-container)
+  ((container :initform (stmx.util:tcons nil nil)))
+  (:documentation "Transactional cons cell."))
+
+(defclass transactional-list (transactional-ordered-container)
+  ((container :initform (stmx.util:tlist)))
+  (:documentation "Transactional list."))
+
 (defclass transactional-filo-queue (transactional-ordered-container)
   ((container :initform (make-instance 'stmx.util:tstack)))
   (:documentation "FIFO queue."))
@@ -91,6 +109,14 @@ and data, not necessarily in order."))
     (setf cell (if initial-value
                  (make-instance 'stmx.util:tcell :value initial-value)
                  (make-instance 'stmx.util:tcell)))))
+
+(defmethod initialize-instance :after ((instance transactional-cons) &key initial-car initial-cdr)
+  (with-slots (container) instance
+    (setf container (stmx.util:tcons initial-car initial-cdr))))
+
+(defmethod initialize-instance :after ((instance transactional-list) &key initial-data)
+  (with-slots (container) instance
+    (setf container (apply #'stmx.util:tlist initial-data))))
 
 (defmethod initialize-instance :after ((instance transactional-port) &key channel)
   (with-slots (port) instance
@@ -152,6 +178,38 @@ and data, not necessarily in order."))
 (defmethod try-put (value (object transactional-ordered-container))
   (with-slots (container) object
     (stmx.util:try-put container value)))
+
+;;; **************************************************************************
+;;;  Cons-specific methods
+;;; **************************************************************************
+
+(defmethod tcar ((object transactional-cons))
+  (with-slots (container) object
+    (stmx.util:tfirst container)))
+
+(defmethod tcdr ((object transactional-cons))
+  (with-slots (container) object
+    (stmx.util:trest container)))
+
+(defmethod (setf tcar) (new-value (object transactional-cons))
+  (with-slots (container) object
+    (setf (stmx.util:tfirst container) new-value)))
+
+(defmethod (setf tcdr) (new-value (object transactional-cons))
+  (with-slots (container) object
+    (setf (stmx.util:trest container) new-value)))
+
+;;; **************************************************************************
+;;; List-specific methods
+;;; **************************************************************************
+
+(defmethod tpush (value (object transactional-list))
+  (with-slots (container) object
+    (stmx.util:tpush value container)))
+
+(defmethod tpop ((object transactional-list))
+  (with-slots (container) object
+    (stmx.util:tpop container)))
 
 ;;; **************************************************************************
 ;;;  Key-value container methods
@@ -260,3 +318,16 @@ and data, not necessarily in order."))
 (defmethod container-pairs ((object transactional-map))
   (with-slots (container) object
     (stmx.util:gmap-pairs container)))
+
+;;; **************************************************************************
+;;;  Functional wrappers
+;;; **************************************************************************
+
+(defun tcons (car cdr)
+  (make-instance 'transactional-cons
+                 :initial-car car
+                 :initial-cdr cdr))
+
+(defun tlist (&rest data)
+  (make-instance 'transactional-list
+                 :initial-data data))
