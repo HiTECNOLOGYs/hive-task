@@ -105,10 +105,11 @@ and data, not necessarily in order."))
 ;;; **************************************************************************
 
 (defmethod initialize-instance :after ((instance transactional-cell) &key initial-value)
-  (with-slots (cell) instance
-    (setf cell (if initial-value
-                 (make-instance 'stmx.util:tcell :value initial-value)
-                 (make-instance 'stmx.util:tcell)))))
+  (with-slots (container) instance
+    (setf container (if initial-value
+                      (make-instance 'stmx.util:tcell
+                                     :value initial-value)
+                      (make-instance 'stmx.util:tcell)))))
 
 (defmethod initialize-instance :after ((instance transactional-cons) &key initial-car initial-cdr)
   (with-slots (container) instance
@@ -119,25 +120,26 @@ and data, not necessarily in order."))
     (setf container (apply #'stmx.util:tlist initial-data))))
 
 (defmethod initialize-instance :after ((instance transactional-port) &key channel)
-  (with-slots (port) instance
-    (unless channel
-      (error "Port cannot exist without linked channel"))
-    (with-slots (container) channel
-      (setf port (make-instance 'stmx.util:tport :channel container)))))
+  (unless channel
+    (error "Port cannot exist without linked channel"))
+  (with-slots (container) channel
+    (setf container (make-instance 'stmx.util:tport
+                                   :channel (slot-value channel 'container)))))
 
 (defmethod initialize-instance :after ((instance transactional-hash-table) &key test hash)
-  (with-slots (hash-table) instance
-    (unless test
-      (error "Test function must be supplied for hash table to work"))
-    (setf hash-table (make-instance 'stmx.util:thash-table
-                                    :test test
-                                    :hash hash))))
+  (unless test
+    (error "Test function must be supplied for hash table to work"))
+  (with-slots (container) instance
+    (setf container (make-instance 'stmx.util:thash-table
+                                   :test test
+                                   :hash hash))))
 
 (defmethod initialize-instance :after ((instance transactional-map) &key predicate)
-  (with-slots (tmap) instance
-    (unless predicate
-      (error "Preducate must be supplied for map to work"))
-    (setf tmap (make-instance 'stmx.util:tmap :pred predicate))))
+  (unless predicate
+    (error "Preducate must be supplied for map to work"))
+  (with-slots (container) instance
+    (setf container (make-instance 'stmx.util:tmap
+                                   :pred predicate))))
 
 ;;; **************************************************************************
 ;;;  Generic methods
