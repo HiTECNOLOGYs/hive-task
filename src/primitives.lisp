@@ -333,3 +333,24 @@ and data, not necessarily in order."))
 (defun tlist (&rest data)
   (make-instance 'transactional-list
                  :initial-data data))
+
+;;; **************************************************************************
+;;;  Pretty printing
+;;; **************************************************************************
+
+(defmethod print-object ((instance transactional-cons) stream)
+  (with-slots (container) instance
+    (print-unreadable-object (instance stream)
+      (format stream "(~A . ~A)"
+              (atomic (stmx.util:tfirst container))
+              (atomic (stmx.util:trest container))))))
+
+(defmethod print-object ((instance transactional-list) stream)
+  (with-slots (container) instance
+    (print-unreadable-object (instance stream)
+      (format stream "(~A"
+              (atomic (stmx.util:tfirst container)))
+      (loop for rest = (stmx.util:trest container) then (stmx.util:trest rest)
+            while (typep rest 'stmx.util:tcons)
+            doing (format stream " ~A" (stmx.util:tfirst rest)))
+      (format stream ")"))))
