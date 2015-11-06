@@ -1,6 +1,6 @@
 (in-package #:org.hitecnologys.hive-task)
 
-(defparameter *scheduler-run-interval* 1/100) ; 10 ms sounds like about enough precison.
+(defparameter *scheduler-run-interval* 1/1000) ; 1 ms worth precison.
 
 (defvar       *scheduler-thread*       nil)
 (defvar       *threads-pool*           nil)
