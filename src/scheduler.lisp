@@ -1,6 +1,9 @@
 (in-package #:org.hitecnologys.hive-task)
 
-(defvar *scheduler* nil)
+(defvar *scheduler* nil
+  "Used to hold current *SCHEDULER* instance.
+Hive-task itself doesn't handle this and it's up to user whether to store
+anything there or not.")
 
 (define-constant +time-slice-duration+ 1/1000) ; That is 1 ms.
                                                ; About enough time for almost anything.
@@ -333,6 +336,36 @@
                        (run-interval 1/1000)
                        (channel-class 'message-channel/local)
                        (port-class 'message-port/local))
+  "Creates and initializes work scheduler. The scheduler is a thread that
+starts all the worker threads and monitors their state (i.e. restarting
+crashed threads) as well as passes work to threads. This approach was chosen
+to allow remote work execution (since very little computes compared to total
+number of computers out there are RDMA capable). The strategy used by
+scheduler is chosing random worker and then giving work to it.
+
+You can then start this scheduler using START-SCHEDULER. It might also be wise
+to store the instance somewhere. Hive-task provides *SCHEDULER* variable for
+that.
+
+Can also configure some important schedulering parameters:
+
+* RUN-INTERVAL: defines how frequently scheduler is run. Default option is 1
+  ms which makes sense for most of the cases but if you're handling heavy load
+  it's recommended to increase it to, say, 10 ms or more. Basically, the rule of
+  thumb is: keep it 10 times more than average work takes. There's no
+  explanation for that rule, I just made it up. If you need more precise value,
+  you should profile the scheduler and measure how much overhead it adds and
+  adjust value to keep it below your acceptable value.
+
+* CHANNEL-CLASS: defines class used to create instances of channel that is
+  used for message transport. Since this has little usage now, it's
+  recommended not to touch it, however it will be used later to specify medium
+  used to carry messages.
+
+* PORT-CLASS: defines class used to create instances of ports that are used as
+  an interface to channel. These have little usage as well so you should only
+  change this if you need to replace my implementation with more efficient
+  one."
   (unless (stmx:hw-transaction-supported?)
     (log:warn #.(concatenate 'string
                              "Seems like your machine doesn't have hardware STM support."
@@ -345,10 +378,18 @@
                  :port-class port-class))
 
 (defun start-scheduler (scheduler)
+  "Starts the work scheduler.
+It also checks whether scheduler is already running. If it is, it doesn't do anything.
+
+See MAKE-SCHEDULER for more details on scheduler."
   (unless (thread-running-p scheduler)
     (start-thread scheduler)))
 
 (defun stop-scheduler (scheduler)
+  "Stops work scheduler.
+It also checks whether scheduler is already running. If it isn't, it doesn't do anything.
+
+See MAKE-SCHEDULER for more details on scheduler."
   (when (thread-running-p scheduler)
     (stop-thread scheduler)))
 
@@ -407,6 +448,9 @@
   (stop-workers thread))
 
 (defmethod put-work ((scheduler scheduler-thread) (work work-data))
+  "Sends work to scheduler for futher distrubition to workers.
+
+See MAKE-WORK for more details on work."
   (with-slots (threads-pool message-ports) scheduler
     (let* ((thread (take-random-thread-from-pool threads-pool))
            (uuid (atomic (thread-uuid thread)))
@@ -414,4 +458,8 @@
       (send-message port work))))
 
 (defun make-work (function &rest arguments)
+  "Creates work out of function and arguments.
+The work can the be executes using PUT-WORK.
+
+See MAKE-SCHEDULER for more details on work execution."
   (apply #'make-work-data function arguments))
