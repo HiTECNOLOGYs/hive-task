@@ -5,6 +5,8 @@
                #:com.informatimago.clmisc ; More tools
                #:stmx                     ; Multithreading
                #:closer-mop               ; MOP
+               #:uuid                     ; Used for identifying various entities
+               #:log4cl                   ; Logging
                )
   :serial t
   :pathname "src/"
@@ -13,4 +15,5 @@
                (:file "primitives")
                (:file "threads")
                (:file "timers")
+               (:file "message-transport")
                (:file "scheduler")))
