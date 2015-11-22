@@ -258,7 +258,7 @@ to pass it to every single function call.")
 (defmethod take-random-thread-from-pool (pool)
   (with-slots (threads thread-count) pool
     (atomic
-     (find-nth-thread threads (random thread-count)))))
+     (find-nth-thread pool (random thread-count)))))
 
 (defun remove-thread (pool uuid)
   (with-slots (threads) pool
