@@ -1,8 +1,6 @@
 (in-package #:org.hitecnologys.hive-task)
 
-(defvar *scheduler* nil
-  "Optionally, scheduler can be bound to this variable and then you won't have
-to pass it to every single function call.")
+(defvar *scheduler* nil)
 
 (define-constant +time-slice-duration+ 1/1000) ; That is 1 ms.
                                                ; About enough time for almost anything.

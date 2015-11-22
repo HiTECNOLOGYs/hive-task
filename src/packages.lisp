@@ -71,7 +71,9 @@
   (:use #:closer-common-lisp
         #:alexandria
         #:stmx)
-  (:export #:make-scheduler ;  Function
+  (:export #:*scheduler* ; ... Dynamic variable
+
+           #:make-scheduler ;  Function
            #:start-scheduler ; Function
            #:stop-scheduler ;  Function
 
