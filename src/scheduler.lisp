@@ -145,12 +145,13 @@ anything there or not.")
 ;; Setting up safe context around the work.
 (defmethod handle-message :around ((thread worker-thread) (message work-data))
   (log:trace "Message received by ~A: ~A" thread message)
-  (handler-bind
-      ((error (curry #'record-crash thread)))
-    (unwind-protect
+  (handler-case
+      (unwind-protect
          (progn (change-thread-work-state thread :running)
                 (call-next-method))
-      (change-thread-work-state thread :waiting))))
+      (change-thread-work-state thread :waiting))
+    (error (condition)
+      (record-crash thread condition))))
 
 (defmethod handle-message ((thread worker-thread) (message work-data))
   (log:trace "Message received by ~A: ~A" thread message)
@@ -266,7 +267,10 @@ anything there or not.")
     (atomic
      (loop for (thread . tail) on threads
            if (uuid:uuid= uuid (thread-uuid thread))
-             do (setf (cdr buffer) tail)
+             do (if (not (consp buffer))
+                  (setf threads tail)
+                  (setf (cdr buffer) tail
+                        threads buffer))
                 (return t)
            else
              collect thread into buffer))))
