@@ -6,6 +6,7 @@
                #:stmx                     ; Multithreading
                #:closer-mop               ; MOP
                #:uuid                     ; Used for identifying various entities
+               #:log4cl                   ; Logging
                )
   :serial t
   :pathname "src/"
