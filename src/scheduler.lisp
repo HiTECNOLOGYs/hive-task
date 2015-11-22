@@ -327,6 +327,11 @@ to pass it to every single function call.")
 ;; TODO Implement time slice boundaries enforcement.
 
 (defun make-scheduler ()
+  (unless (stmx:hw-transaction-supported?)
+    (log:warn #.(concatenate 'string
+                             "Seems like your machine doesn't have hardware STM support."
+                             " Proceed only if you know what are you doing since severe performance penalties may arise."
+                             " Consider using SIMPLE-TASKS instead: https://github.com/Shinmera/simple-tasks")))
   (make-thread 'scheduler-thread "Scheduler"))
 
 (defun start-scheduler (scheduler)
