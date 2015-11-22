@@ -71,12 +71,12 @@
   (:use #:closer-common-lisp
         #:alexandria
         #:stmx)
-  (:export #:*scheduler* ; ... Dynamic variable
+  (:export #:*scheduler* ; ..................... Dynamic variable
 
-           #:make-scheduler ;  Function
-           #:start-scheduler ; Function
-           #:stop-scheduler ;  Function
+           #:make-scheduler ; .................. Function
+           #:start-scheduler ; ................. Function
+           #:stop-scheduler ; .................. Function
 
-           #:put-work ; ...... Generic function
-           #:make-work ; ..... Function
+           #:put-work ; ........................ Generic function
+           #:make-work ; ....................... Function
            ))
