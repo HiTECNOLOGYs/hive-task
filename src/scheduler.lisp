@@ -260,14 +260,17 @@ to pass it to every single function call.")
 (defun remove-thread (pool uuid)
   (with-slots (threads) pool
     (atomic
-     (remove uuid threads
-             :test #'uuid:uuid=
-             :key #'thread-uuid))))
+     (loop for (thread . tail) on threads
+           if (uuid:uuid= uuid (thread-uuid thread))
+             do (setf (cdr buffer) tail)
+                (return t)
+           else
+             collect thread into buffer))))
 
 (defmethod remove-thread-from-pool (pool uuid)
-  (with-slots (threads) pool
-    (atomic
-     (setf threads (remove-thread pool uuid)))))
+  (with-slots (threads thread-count) pool
+    (when (remove-thread pool uuid)
+      (atomic (decf thread-count)))))
 
 (defun read-new-size ()
   (format t "Enter new size: ")
