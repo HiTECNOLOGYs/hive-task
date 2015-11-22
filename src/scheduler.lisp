@@ -197,6 +197,7 @@ to pass it to every single function call.")
 (defgeneric take-random-thread-from-pool (pool))
 (defgeneric remove-thread-from-pool (pool uuid))
 (defgeneric resize-pool (pool new-size))
+(defgeneric map-pool (pool function))
 
 (defmethod initialize-instance :after ((instance threads-pool) &key initial-pool-size)
   (with-slots (threads thread-count pool-size) instance
@@ -286,6 +287,10 @@ to pass it to every single function call.")
            (setf pool-size changed-new-size))))
       (atomic
        (setf pool-size new-size)))))
+
+(defmethod map-pool (pool function)
+  (with-slots (threads) pool
+    (mapc function (atomic threads))))
 
 ;;; **************************************************************************
 ;;;  Scheduler
