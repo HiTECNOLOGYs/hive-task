@@ -413,15 +413,6 @@ See MAKE-SCHEDULER for more details on scheduler."
 (defun stop-worker (port)
   (send-message port (make-system-event :stop)))
 
-(defun start-workers (scheduler)
-  (let ((cpu-count (get-cpu-core-count)))
-    (loop repeat cpu-count doing
-      (start-worker scheduler))))
-
-(defun stop-workers (scheduler)
-  (with-slots (message-ports) scheduler
-    (tc:map-container #'stop-worker message-ports)))
-
 (defun cleanup-after-worker (scheduler thread)
   (with-slots (uuid) thread
     (with-slots (threads-pool) scheduler
@@ -429,6 +420,18 @@ See MAKE-SCHEDULER for more details on scheduler."
     (with-slots (message-ports message-channels) scheduler
       (atomic (tc:rem-value uuid message-ports))
       (atomic (tc:rem-value uuid message-channels)))))
+
+(defun start-workers (scheduler)
+  (let ((cpu-count (get-cpu-core-count)))
+    (loop repeat cpu-count doing
+      (start-worker scheduler))))
+
+(defun stop-workers (scheduler)
+  (with-slots (threads-pool message-ports) scheduler
+    (atomic
+     (tc:map-container #'stop-worker message-ports))
+    (atomic
+     (tc:map-container (curry #'cleanup-after-worker scheduler) threads-pool))))
 
 (defun check-worker (scheduler thread)
   (unless (thread-running-p thread)
