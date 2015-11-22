@@ -324,6 +324,8 @@ to pass it to every single function call.")
                  :initform 1/1000 ; 1 ms worth of precision.
                  )))
 
+(defgeneric put-work (scheduler work))
+
 ;; TODO Make it intelligently guess how much time work is going to take.
 ;;      (Based on statistics from another calls of same functions, of course)
 ;; TODO Actually make it dynamically scale workers count.
@@ -398,3 +400,13 @@ to pass it to every single function call.")
 
 (defmethod cleanup-thread :before ((thread scheduler-thread))
   (stop-workers thread))
+
+(defmethod put-work ((scheduler scheduler-thread) (work work-data))
+  (with-slots (threads-pool message-ports) scheduler
+    (let* ((thread (take-random-thread-from-pool threads-pool))
+           (uuid (atomic (thread-uuid thread)))
+           (port (atomic (tc:get-value uuid message-ports))))
+      (send-message port work))))
+
+(defun make-work (function &rest arguments)
+  (apply #'make-work-data function arguments))
