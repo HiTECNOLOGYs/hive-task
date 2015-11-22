@@ -53,10 +53,10 @@ To put some actual work, use
 
 ```lisp
 ;; Example 1
-(hive-task:put-work *scheduler* (make-work #'foo))
+(hive-task:put-work *scheduler* (hive-task:make-work #'foo))
 
 ;; Example 2
-(hive-task:put-work *scheduler* (make-work #'bar "arg-1" 'arg-2 3))
+(hive-task:put-work *scheduler* (hive-task:make-work #'bar "arg-1" 'arg-2 3))
 ```
 
 Status
@@ -80,5 +80,5 @@ It's important to notice that I'm not focused on delivering solution for
 migration of single-threaded application to multi-threaded environments (yet).
 Instead, this library is meant to help developers who are in desperate need of
 paralleling tasks that are meant to be paralleled like heavy computations or
-handling network messages. In fact, The original reason I wrote this was to
+handling network messages. In fact, the original reason I wrote this was to
 manage threads in my networking library I use for several servers of mine.
