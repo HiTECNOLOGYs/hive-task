@@ -330,12 +330,10 @@ to pass it to every single function call.")
       (connect-port (worker-thread-message-port worker) channel)
       (connect-port port channel)
       (with-slots (uuid) worker
-        (atomic
-         (after-commit
-           (start-thread worker))
-         (atomic (setf (tc:get-value uuid message-ports) port))
-         (atomic (setf (tc:get-value uuid threads-pool) worker))
-         (atomic (setf (tc:get-value uuid message-channels) channel)))))))
+        (atomic (setf (tc:get-value uuid message-ports) port))
+        (atomic (setf (tc:get-value uuid threads-pool) worker))
+        (atomic (setf (tc:get-value uuid message-channels) channel)))
+      (start-thread worker))))
 
 (defun stop-worker (port)
   (send-message port (make-system-event :stop)))
