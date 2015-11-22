@@ -277,8 +277,8 @@ and data, not necessarily in order."))
   ;; Surprisingly, this isn't present in STMX.UTIL package. =P
   ;; We need to define MAP-GHASH outselves.
   (with-slots (container) object
-    (loop for key in (stmx.util:gmap-keys object)
-          collecting (funcall function (stmx.util:get-gmap container key)))))
+    (loop for key in (stmx.util:ghash-keys container)
+          collecting (funcall function (stmx.util:get-ghash container key)))))
 
 (defmethod map-container (function (object transactional-map))
   (with-slots (container) object
