@@ -71,8 +71,10 @@
   (:use #:closer-common-lisp
         #:alexandria
         #:stmx)
-  (:export #:start-scheduler
-           #:stop-scheduler
+  (:export #:make-scheduler ;  Function
+           #:start-scheduler ; Function
+           #:stop-scheduler ;  Function
 
-           #:put-work
-           #:make-work))
+           #:put-work ; ...... Generic function
+           #:make-work ; ..... Function
+           ))
