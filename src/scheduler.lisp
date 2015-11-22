@@ -292,6 +292,13 @@ to pass it to every single function call.")
   (with-slots (threads) pool
     (mapc function (atomic threads))))
 
+(defmethod print-object ((object threads-pool) stream)
+  (print-unreadable-object (object stream :type t :identity t)
+    (with-slots (pool-size thread-count) object
+        (format stream "size: ~D holding: ~D"
+                (atomic pool-size)
+                (atomic thread-count)))))
+
 ;;; **************************************************************************
 ;;;  Scheduler
 ;;; **************************************************************************
