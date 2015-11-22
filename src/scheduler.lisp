@@ -12,6 +12,9 @@ to pass it to every single function call.")
 ;;;  UUID support for transactional containers
 ;;; **************************************************************************
 
+(defmethod (setf tc:get-value) (new-value (key uuid:uuid) object)
+  (setf (tc:get-value (uuid:uuid-to-byte-array key) object) new-value))
+
 (defmethod tc:get-value ((key uuid:uuid) object &optional default)
   (tc:get-value (uuid:uuid-to-byte-array key) object default))
 
