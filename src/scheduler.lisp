@@ -329,13 +329,20 @@
 ;; TODO Actually make it dynamically scale workers count.
 ;; TODO Implement time slice boundaries enforcement.
 
-(defun make-scheduler ()
+(defun make-scheduler (&key
+                       (run-interval 1/1000)
+                       (channel-class 'message-channel/local)
+                       (port-class 'message-port/local))
   (unless (stmx:hw-transaction-supported?)
     (log:warn #.(concatenate 'string
                              "Seems like your machine doesn't have hardware STM support."
                              " Proceed only if you know what are you doing since severe performance penalties may arise."
                              " Consider using SIMPLE-TASKS instead: https://github.com/Shinmera/simple-tasks")))
-  (make-thread 'scheduler-thread "Scheduler"))
+  (make-instance 'scheduler-thread
+                 :name "Scheduler"
+                 :run-interval run-interval
+                 :channel-class channel-class
+                 :port-class port-class))
 
 (defun start-scheduler (scheduler)
   (unless (thread-running-p scheduler)
