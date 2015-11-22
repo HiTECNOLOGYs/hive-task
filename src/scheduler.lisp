@@ -349,9 +349,9 @@ to pass it to every single function call.")
           (port (make-instance port-class)))
       (connect-port (worker-thread-message-port worker) channel)
       (connect-port port channel)
+      (put-thread-into-pool threads-pool worker)
       (with-slots (uuid) worker
         (atomic (setf (tc:get-value uuid message-ports) port))
-        (atomic (setf (tc:get-value uuid threads-pool) worker))
         (atomic (setf (tc:get-value uuid message-channels) channel)))
       (start-thread worker))))
 
@@ -367,16 +367,22 @@ to pass it to every single function call.")
   (with-slots (message-ports) scheduler
     (tc:map-container #'stop-worker message-ports)))
 
+(defun cleanup-after-worker (scheduler thread)
+  (with-slots (uuid) thread
+    (with-slots (threads-pool) scheduler
+      (remove-thread-from-pool threads-pool uuid))
+    (with-slots (message-ports message-channels) scheduler
+      (atomic (tc:rem-value uuid message-ports))
+      (atomic (tc:rem-value uuid message-channels)))))
+
 (defun check-worker (scheduler thread)
   (unless (thread-running-p thread)
-    (with-slots (threads-pool) scheduler
-      (with-slots (uuid) thread
-        (tc:rem-value uuid threads-pool)))
+    (cleanup-after-worker scheduler thread)
     (start-worker scheduler)))
 
 (defun check-workers (scheduler)
   (with-slots (threads-pool) scheduler
-    (tc:map-container (curry #'check-worker scheduler) threads-pool)))
+    (map-pool threads-pool (curry #'check-worker scheduler))))
 
 (defmethod init-thread :after ((thread scheduler-thread))
   (start-workers thread))
