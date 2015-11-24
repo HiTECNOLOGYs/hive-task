@@ -16,4 +16,7 @@
                (:file "threads")
                (:file "timers")
                (:file "message-transport")
+               (:file "messages")
+               (:file "worker-threads")
+               (:file "thread-pools")
                (:file "scheduler")))
