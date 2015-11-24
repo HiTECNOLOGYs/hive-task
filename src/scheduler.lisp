@@ -325,6 +325,8 @@ anything there or not.")
                   :initform 'message-channel/local)
    (port-class :initarg :port-class
                :initform 'message-port/local)
+   (work-queue :initarg :work-queue
+               :initform (make-instance 'tc:transactional-fifo-queue))
    (run-interval :initarg :run-interval
                  :initform 1/1000 ; 1 ms worth of precision.
                  )))
@@ -442,6 +444,30 @@ See MAKE-SCHEDULER for more details on scheduler."
   (with-slots (threads-pool) scheduler
     (map-pool threads-pool (curry #'check-worker scheduler))))
 
+(defun put-work-to-queue (scheduler work)
+  (with-slots (work-queue) scheduler
+    (atomic (tc:put work work-queue))))
+
+(defun take-work-from-queue (scheduler &optional (block? nil))
+  (with-slots (work-queue) scheduler
+    (if block?
+      (atomic (tc:take work-queue))
+      (atomic (tc:try-take work-queue)))))
+
+(defun distribute-work (scheduler work)
+  (with-slots (threads-pool message-ports) scheduler
+    (let* ((thread (take-random-thread-from-pool threads-pool))
+           (uuid (atomic (thread-uuid thread)))
+           (port (atomic (tc:get-value uuid message-ports))))
+      (send-message port work))))
+
+(defun check-work (scheduler)
+  (with-slots (work-queue) scheduler
+    (multiple-value-bind (available? work)
+        (take-work-from-queue scheduler)
+      (when available?
+        (distribute-work scheduler work)))))
+
 (defmethod init-thread :after ((thread scheduler-thread))
   (start-workers thread))
 
@@ -449,7 +475,8 @@ See MAKE-SCHEDULER for more details on scheduler."
   (do-while-running (thread)
     (with-slots (run-interval) thread
       (with-time-window (run-interval)
-        (check-workers thread)))))
+        (check-workers thread)
+        (check-work thread)))))
 
 (defmethod cleanup-thread :before ((thread scheduler-thread))
   (stop-workers thread))
@@ -458,13 +485,9 @@ See MAKE-SCHEDULER for more details on scheduler."
   "Sends work to scheduler for futher distrubition to workers.
 
 See MAKE-WORK for more details on work."
-  (with-slots (threads-pool message-ports) scheduler
-    (let* ((thread (take-random-thread-from-pool threads-pool))
-           (uuid (atomic (thread-uuid thread)))
-           (port (atomic (tc:get-value uuid message-ports))))
-      (send-message port work))))
+  (put-work-to-queue scheduler work))
 
-(defun make-work (function &rest arguments)
+(defun make-work (functio n &rest arguments)
   "Creates work out of function and arguments.
 The work can the be executes using PUT-WORK.
 
