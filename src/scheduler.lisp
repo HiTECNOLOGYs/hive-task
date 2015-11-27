@@ -198,7 +198,7 @@ See MAKE-SCHEDULER for more details on scheduler."
 See MAKE-WORK for more details on work."
   (put-work-to-queue scheduler work))
 
-(defun make-work (functio n &rest arguments)
+(defun make-work (function &rest arguments)
   "Creates work out of function and arguments.
 The work can the be executes using PUT-WORK.
 
